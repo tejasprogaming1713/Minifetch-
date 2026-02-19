@@ -1,0 +1,101 @@
+#!/bin/bash
+
+# MiniFetch v1.0
+
+clear
+
+# ─── FLAGS ──────────────────────────────────────────────
+if [[ "$1" == "--version" ]]; then
+    echo "MiniFetch v1.0"
+    exit 0
+fi
+
+# ─── Colors ─────────────────────────────────────────────
+CYAN="\e[36m"
+GREEN="\e[32m"
+YELLOW="\e[33m"
+MAGENTA="\e[35m"
+NC="\e[0m"
+
+# ─── ASCII LOGO ─────────────────────────────────────────
+LOGO="
+${CYAN}
+ __  __ _       _ ______     _       _
+|  \/  (_)_ __ (_)  ___|   | | ___ | |__
+| |\/| | | '_ \| | |_  |   | |/ _ \| '_ \
+| |  | | | | | | |  _| |___| | (_) | | | |
+|_|  |_|_|_| |_|_|_|   \____|_|\___/|_| |_|
+${NC}
+"
+
+# ─── BASIC INFO ─────────────────────────────────────────
+HOST=$(hostname)
+USER=$(whoami)
+OS=$(grep PRETTY_NAME /etc/os-release 2>/dev/null | cut -d= -f2 | tr -d '"')
+KERNEL=$(uname -r)
+ARCH=$(uname -m)
+UPTIME=$(uptime -p)
+BOOT=$(who -b 2>/dev/null | awk '{print $3, $4}')
+SHELL_NAME=$(basename "$SHELL")
+DATE=$(date)
+
+# ─── CPU ────────────────────────────────────────────────
+CPU=$(grep -m1 'model name' /proc/cpuinfo | cut -d: -f2 | sed 's/^ //')
+CORES=$(nproc)
+LOAD=$(cut -d' ' -f1-3 /proc/loadavg)
+
+# ─── MEMORY ─────────────────────────────────────────────
+RAM_USED=$(free -h | awk '/Mem:/ {print $3}')
+RAM_TOTAL=$(free -h | awk '/Mem:/ {print $2}')
+RAM_P=$(free | awk '/Mem:/ {printf "%.0f%%", $3/$2*100}')
+
+# ─── DISK ───────────────────────────────────────────────
+DISK=$(df -h / | awk 'NR==2 {print $3 " / " $2}')
+DISK_P=$(df -h / | awk 'NR==2 {print $5}')
+
+# ─── NETWORK ────────────────────────────────────────────
+PUB_IP=$(curl -s ifconfig.me 2>/dev/null)
+PRI_IP=$(hostname -I | awk '{print $1}')
+
+# ─── SYSTEM ─────────────────────────────────────────────
+PROC=$(ps -e --no-headers | wc -l)
+PKGS=$(command -v dpkg >/dev/null && dpkg -l | wc -l || echo "N/A")
+VIRT=$(systemd-detect-virt 2>/dev/null || echo "none")
+
+# ─── OUTPUT ─────────────────────────────────────────────
+echo -e "$LOGO"
+
+echo -e "${GREEN}${USER}@${HOST}${NC}"
+echo -e "${YELLOW}────────────────────────────────────${NC}"
+
+printf "${MAGENTA}OS        :${NC} %s\n" "$OS"
+printf "${MAGENTA}Kernel    :${NC} %s\n" "$KERNEL"
+printf "${MAGENTA}Arch      :${NC} %s\n" "$ARCH"
+printf "${MAGENTA}Uptime    :${NC} %s\n" "$UPTIME"
+printf "${MAGENTA}Shell     :${NC} %s\n" "$SHELL_NAME"
+printf "${MAGENTA}Boot Time :${NC} %s\n" "$BOOT"
+printf "${MAGENTA}Date      :${NC} %s\n" "$DATE"
+
+echo -e "${YELLOW}────────────────────────────────────${NC}"
+
+printf "${MAGENTA}CPU       :${NC} %s\n" "$CPU"
+printf "${MAGENTA}Cores     :${NC} %s\n" "$CORES"
+printf "${MAGENTA}Load Avg  :${NC} %s\n" "$LOAD"
+
+echo -e "${YELLOW}────────────────────────────────────${NC}"
+
+printf "${MAGENTA}RAM       :${NC} %s / %s (%s)\n" "$RAM_USED" "$RAM_TOTAL" "$RAM_P"
+printf "${MAGENTA}Disk      :${NC} %s (%s)\n" "$DISK" "$DISK_P"
+
+echo -e "${YELLOW}────────────────────────────────────${NC}"
+
+printf "${MAGENTA}Processes :${NC} %s\n" "$PROC"
+printf "${MAGENTA}Packages  :${NC} %s\n" "$PKGS"
+printf "${MAGENTA}Virt      :${NC} %s\n" "$VIRT"
+
+echo -e "${YELLOW}────────────────────────────────────${NC}"
+
+printf "${MAGENTA}Private IP:${NC} %s\n" "$PRI_IP"
+printf "${MAGENTA}Public IP :${NC} %s\n" "$PUB_IP"
+
+echo ""
